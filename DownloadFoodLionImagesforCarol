@@ -1,0 +1,72 @@
+Sub DownloadAndSaveImages()
+
+    ' Define the necessary variables.
+    Dim ws As Worksheet
+    Dim url_column As Range
+    Dim img_url As String
+    Dim img_name As String
+    Dim img_path As String
+    Dim store_number As String
+    Dim asset_tag_id As String
+    Dim i As Long
+
+    ' Set the worksheet that contains the data.
+    Set ws = ThisWorkbook.Sheets("Sheet1")  ' Change to the name of your worksheet.
+
+    ' Set the range that contains the image URLs.
+    Set url_column = ws.Range("C2:C" & ws.Cells(ws.Rows.Count, "C").End(xlUp).Row)
+
+    ' Loop through each cell in the range.
+    For Each cell In url_column
+
+        ' Get the image URL.
+        img_url = cell.Value
+
+        ' Get the store number and asset tag id from columns A and B.
+        store_number = cell.Offset(0, -2).Value
+        asset_tag_id = cell.Offset(0, -1).Value
+
+        ' Create the image name.
+        img_name = store_number & "-" & asset_tag_id & ".png"  ' Modify the file extension if necessary.
+
+        ' Define the path to save the image.
+        img_path = Environ$("USERPROFILE") & "\Desktop\MyImages\" & img_name
+
+        ' Download and save the image.
+        DownloadImage img_url, img_path
+
+        ' Wait for 5 seconds.
+        Application.Wait (Now + TimeValue("0:00:05"))
+
+    Next cell
+
+End Sub
+
+Sub DownloadImage(URL As String, SavePath As String)
+
+    ' Define the necessary variables.
+    Dim xhr As Object
+    Dim stream As Object
+    Dim data() As Byte
+
+    ' Create the necessary objects.
+    Set xhr = CreateObject("WinHttp.WinHttpRequest.5.1")
+    Set stream = CreateObject("ADODB.Stream")
+
+    ' Download the image data.
+    With xhr
+        .Open "GET", URL, False
+        .send
+        data = .responseBody
+    End With
+
+    ' Save the image data to a file.
+    With stream
+        .Type = 1  ' Binary.
+        .Open
+        .write data
+        .SaveToFile SavePath, 2  ' Overwrite existing.
+        .Close
+    End With
+
+End Sub
