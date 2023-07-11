@@ -1,0 +1,62 @@
+Option Explicit
+
+Sub ClearExceedingDates()
+    Dim filePath As String
+    Dim fileName As String
+    Dim wb As Workbook
+    Dim ws As Worksheet
+    Dim dateColumn As Long
+    Dim lastRow As Long
+    Dim i As Long
+    Dim checkDate As Date
+    
+    ' Turn off screen updating and automatic calculations
+    Application.ScreenUpdating = False
+    Application.Calculation = xlCalculationManual
+    
+    filePath = "C:\Users\MCLLC\Desktop\Project The Giant Company\SC and AC Merged\SC Exports\"
+    fileName = Dir(filePath & "*.xlsx")
+    checkDate = DateSerial(2023, 6, 1)
+    
+    Do While fileName <> ""
+        ' Open the workbook
+        Set wb = Workbooks.Open(filePath & fileName)
+        
+        ' Process each worksheet in the workbook
+        For Each ws In wb.Worksheets
+            ' Attempt to find the date column
+            dateColumn = 0
+            On Error Resume Next
+            dateColumn = Application.Match("Manufactured Date (mm/dd/yyyy)", ws.Rows(1), 0)
+            On Error GoTo 0
+            
+            ' If the date column was found, process it
+            If dateColumn > 0 Then
+                ' Find the last row in the column
+                lastRow = ws.Cells(ws.Rows.Count, dateColumn).End(xlUp).Row
+                
+                ' Process each cell in the column
+                For i = 2 To lastRow
+                    ' If the cell contains a date greater than the check date, clear it
+                    If IsDate(ws.Cells(i, dateColumn).Value) And ws.Cells(i, dateColumn).Value > checkDate Then
+                        ws.Cells(i, dateColumn).ClearContents
+                    End If
+                Next i
+            End If
+            
+            ' Release resources held by the worksheet
+            Set ws = Nothing
+        Next ws
+        
+        ' Save and close the workbook
+        wb.Close SaveChanges:=True
+        Set wb = Nothing
+
+        ' Move to the next file
+        fileName = Dir
+    Loop
+    
+    ' Turn screen updating and automatic calculations back on
+    Application.ScreenUpdating = True
+    Application.Calculation = xlCalculationAutomatic
+End Sub
